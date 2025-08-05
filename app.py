@@ -8,7 +8,7 @@ import secrets
 import ast
 
 app = Flask(__name__)
-app.secret_key = 'jufw1S9ddo8'
+app.secret_key = '31DUJ_4eYlQ'
 app.config['SESSION_COOKIE_DOMAIN'] = '.ninacaseira.com'
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = True  # if using HTTPS
@@ -53,6 +53,7 @@ def init_db():
                   is_delivered BOOLEAN DEFAULT FALSE,
                   is_paid BOOLEAN DEFAULT FALSE,
                   date TEXT DEFAULT CURRENT_TIMESTAMP,
+                  delivery_date TEXT,
                   created_by INTEGER,
                   FOREIGN KEY(created_by) REFERENCES users(id))''')
     
@@ -361,7 +362,7 @@ def sales():
     
     # Get sales with item counts
     c.execute('''SELECT s.id, s.customer_name, s.total_amount, 
-                s.is_delivered, s.is_paid, s.date, s.delivery_cost
+                s.is_delivered, s.is_paid, s.date, s.delivery_cost, s.delivery_date
                 FROM sales s
                 ORDER BY s.date DESC''')
     sales_data = c.fetchall()
@@ -394,8 +395,9 @@ def add_sale():
         delivery_cost = float(request.form.get('delivery_cost', '0').replace(',', '.'))
         date_str = request.form.get('date', datetime.now().strftime('%d/%m/%Y'))
         date = datetime.strptime(date_str, '%d/%m/%Y').strftime('%Y-%m-%d')
+        delivery_date_str = request.form.get('delivery_date', datetime.now().strftime('%d/%m/%Y'))
+        delivery_date = datetime.strptime(delivery_date_str, '%d/%m/%Y').strftime('%Y-%m-%d')
 
-        
         if not recipe_ids or not all(recipe_ids):
             flash('Por favor selecione ao menos 1 receita', 'danger')
             return redirect(url_for('sales'))
@@ -403,14 +405,17 @@ def add_sale():
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
         
-        # Insert the sale
+        # Insert the sale - Updated to include delivery_date
         c.execute("""INSERT INTO sales 
                     (customer_name, total_amount, delivery_cost,
-                     is_delivered, is_paid, date, created_by)
-                    VALUES (?, 0, ?, ?, ?, ?, ?)""",
+                     is_delivered, is_paid, date, delivery_date, created_by)
+                    VALUES (?, 0, ?, ?, ?, ?, ?, ?)""",
                  (customer_name, delivery_cost,
-                  'is_delivered' in request.form, 'is_paid' in request.form,
-                  date, current_user.id))
+                  'is_delivered' in request.form, 
+                  'is_paid' in request.form,
+                  date, 
+                  delivery_date,
+                  current_user.id))  # Added delivery_date here
         
         sale_id = c.lastrowid
         total_amount = 0
@@ -458,6 +463,8 @@ def edit_sale(sale_id):
         recipe_ids = request.form.getlist('recipe_id[]')
         quantities = request.form.getlist('quantity[]')
         delivery_cost = float(request.form.get('delivery_cost', '0').replace(',', '.'))
+        delivery_date_str = request.form.get('delivery_date', datetime.now().strftime('%d/%m/%Y'))
+        delivery_date = datetime.strptime(delivery_date_str, '%d/%m/%Y').strftime('%Y-%m-%d')
         
         try:
             # Parse date from DD/MM/YYYY to YYYY-MM-DD
@@ -502,7 +509,8 @@ def edit_sale(sale_id):
                         delivery_cost = ?,
                         is_delivered = ?, 
                         is_paid = ?,
-                        date = ?
+                        date = ?,
+                        delivery_date = ?
                     WHERE id = ?""",
                  (customer_name, 
                   total_amount + delivery_cost,
@@ -528,6 +536,13 @@ def edit_sale(sale_id):
             sale[6] = sale_date
         except (ValueError, TypeError):
             sale[6] = datetime.now().strftime('%d/%m/%Y')  # Fallback to current date
+    
+    if sale and len(sale) > 7 and sale[7]:  # delivery_date is at index 7
+        try:
+            delivery_date = datetime.strptime(sale[7], '%Y-%m-%d').strftime('%d/%m/%Y')
+            sale[7] = delivery_date
+        except (ValueError, TypeError):
+            sale[7] = datetime.now().strftime('%d/%m/%Y')  # Fallback to current date
     
     # Ensure delivery cost is properly formatted (index 3 is delivery_cost)
     if sale and sale[3] is not None:
