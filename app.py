@@ -9,6 +9,9 @@ import ast
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
+app.config['SESSION_COOKIE_DOMAIN'] = '.ninacaseira.com'
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = True  # if using HTTPS
 
 # Database setup
 def init_db():
