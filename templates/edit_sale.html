@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <h2 class="text-3xl font-bold text-primary mb-6">
+        <i class="fas fa-edit mr-2"></i>Editar Venda
+    </h2>
+
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h4><i class="fas fa-pencil-alt mr-2"></i>Editar Venda</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">
+                        <i class="fas fa-user text-primary mr-2"></i>Nome do Cliente (Opcional)
+                    </label>
+                    <input type="text" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-secondary" 
+                           id="customer_name" name="customer_name" value="{{ sale[1] if sale[1] else '' }}">
+                </div>
+                
+                <div id="recipe-items" class="space-y-4">
+                    {% for item in sale_items %}
+                    <div class="recipe-item border p-4 rounded-lg">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                            <div class="md:col-span-6">
+                                <label class="block text-gray-700 mb-2">
+                                    <i class="fas fa-utensils text-primary mr-2"></i>Receita
+                                </label>
+                                <select class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-secondary recipe-select" 
+                                        name="recipe_id[]" required>
+                                    <option value="">Selecione uma receita</option>
+                                    {% for recipe in recipes %}
+                                    <option value="{{ recipe[0] }}" {% if recipe[0] == item[0] %}selected{% endif %}>
+                                        {{ recipe[1] }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="md:col-span-4">
+                                <label class="block text-gray-700 mb-2">
+                                    <i class="fas fa-hashtag text-primary mr-2"></i>Quantidade
+                                </label>
+                                <input type="number" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-secondary quantity" 
+                                       name="quantity[]" min="1" value="{{ item[1] }}" required>
+                            </div>
+                            <div class="md:col-span-2 flex items-end">
+                                <button type="button" class="remove-recipe w-full bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-opacity-90">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="mt-4 mb-6">
+                    <button type="button" id="add-recipe" 
+                            class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-opacity-90">
+                        <i class="fas fa-plus mr-2"></i>Adicionar Outra Receita
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h5 class="font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calculator text-primary mr-2"></i>Resumo de Valores
+                        </h5>
+                        <div class="space-y-1">
+                            <div class="flex justify-between">
+                                <span>Subtotal:</span>
+                                <span id="price_preview">R$ 0,00</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Custo de Entrega:</span>
+                                <span id="delivery_preview">R$ {{ "%.2f"|format(sale[3]|float)|replace('.', ',') }}</span>
+                            </div>
+                            <div class="flex justify-between font-bold border-t pt-2 mt-2">
+                                <span>Total:</span>
+                                <span id="total_preview">R$ 0,00</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-gray-700 mb-2">
+                                <i class="fas fa-calendar-alt text-primary mr-2"></i>Data
+                            </label>
+                            <input type="text" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-secondary" 
+                                   id="date" name="date" placeholder="DD/MM/YYYY" value="{{ sale[6] }}" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 mb-2">
+                                <i class="fas fa-truck text-primary mr-2"></i>Custo de Entrega (R$)
+                            </label>
+                            <input type="text" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-secondary" 
+                                   id="delivery_cost" name="delivery_cost" placeholder="0,00" 
+                                   value="{{ "%.2f"|format(sale[3] if sale[3] is not none else 0)|replace('.', ',') }}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="flex items-center">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-secondary rounded focus:ring-secondary" 
+                               id="is_delivered" name="is_delivered" {% if sale[3] %}checked{% endif %}>
+                        <label for="is_delivered" class="ml-2 text-gray-700">Entregue</label>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-secondary rounded focus:ring-secondary" 
+                               id="is_paid" name="is_paid" {% if sale[4] %}checked{% endif %}>
+                        <label for="is_paid" class="ml-2 text-gray-700">Pago</label>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap gap-2">
+                    <button type="submit" class="bg-secondary text-white px-6 py-2 rounded-lg hover:bg-opacity-90">
+                        <i class="fas fa-save mr-2"></i>Salvar Alterações
+                    </button>
+                    <a href="{{ url_for('sales') }}" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-opacity-90">
+                        <i class="fas fa-times mr-2"></i>Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const recipeData = {};
+    {% for recipe in recipes %}
+    recipeData[{{ recipe[0] }}] = {
+        unit_price: {{ recipe[2] }},
+        box_price: {{ recipe[3] }}
+    };
+    {% endfor %}
+
+    // Template for new recipe items
+    const newRecipeTemplate = `
+        <div class="recipe-item border p-4 rounded-lg">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div class="md:col-span-6">
+                    <label class="block text-gray-700 mb-2">
+                        <i class="fas fa-utensils text-primary mr-2"></i>Receita
+                    </label>
+                    <select class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-secondary recipe-select" 
+                            name="recipe_id[]" required>
+                        <option value="">Selecione uma receita</option>
+                        {% for recipe in recipes %}
+                        <option value="{{ recipe[0] }}">{{ recipe[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="md:col-span-4">
+                    <label class="block text-gray-700 mb-2">
+                        <i class="fas fa-hashtag text-primary mr-2"></i>Quantidade
+                    </label>
+                    <input type="number" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-secondary quantity" 
+                           name="quantity[]" min="1" value="1" required>
+                </div>
+                <div class="md:col-span-2 flex items-end">
+                    <button type="button" class="remove-recipe w-full bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-opacity-90">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add new recipe row
+    document.getElementById('add-recipe').addEventListener('click', function() {
+        const container = document.createElement('div');
+        container.innerHTML = newRecipeTemplate;
+        const newItem = container.firstChild;
+        
+        document.getElementById('recipe-items').appendChild(newItem);
+        
+        // Add event listeners to new elements
+        newItem.querySelector('.recipe-select').addEventListener('change', calculateTotal);
+        newItem.querySelector('.quantity').addEventListener('input', calculateTotal);
+        newItem.querySelector('.remove-recipe').addEventListener('click', function() {
+            if (document.querySelectorAll('.recipe-item').length > 1) {
+                this.closest('.recipe-item').remove();
+                calculateTotal();
+            } else {
+                alert("Você precisa ter pelo menos um item de receita.");
+            }
+        });
+        
+        // Initialize calculation after adding
+        calculateTotal();
+    });
+
+    // Initialize remove buttons for existing items
+    document.querySelectorAll('.remove-recipe').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (document.querySelectorAll('.recipe-item').length > 1) {
+                this.closest('.recipe-item').remove();
+                calculateTotal();
+            } else {
+                alert("Você precisa ter pelo menos um item de receita.");
+            }
+        });
+    });
+
+    function calculateTotal() {
+        let subtotal = 0;
+        const recipeItems = document.querySelectorAll('.recipe-item');
+        
+        recipeItems.forEach(item => {
+            const recipeSelect = item.querySelector('.recipe-select');
+            const quantityInput = item.querySelector('.quantity');
+            
+            if (!recipeSelect || !quantityInput) return;
+            
+            const recipeId = parseInt(recipeSelect.value);
+            const quantity = parseInt(quantityInput.value) || 0;
+            
+            if (recipeId && quantity > 0 && recipeData[recipeId]) {
+                const recipe = recipeData[recipeId];
+                const boxes = Math.floor(quantity / 6);
+                const units = quantity % 6;
+                subtotal += (boxes * recipe.box_price) + (units * recipe.unit_price);
+            }
+        });
+        
+        let deliveryCost = parseFloat(
+            document.getElementById('delivery_cost').value.replace(',', '.')
+        ) || 0;
+        const total = subtotal + deliveryCost;
+        
+        // Update price displays
+        document.getElementById('price_preview').textContent = 
+            'R$ ' + subtotal.toFixed(2).replace('.', ',');
+        document.getElementById('delivery_preview').textContent = 
+            'R$ ' + deliveryCost.toFixed(2).replace('.', ',');
+        document.getElementById('total_preview').textContent = 
+            'R$ ' + total.toFixed(2).replace('.', ',');
+    }
+
+    // Initialize calculation on page load
+    calculateTotal();
+    
+    // Add event listeners to existing elements
+    document.querySelectorAll('.recipe-select').forEach(select => {
+        select.addEventListener('change', calculateTotal);
+    });
+    
+    document.querySelectorAll('.quantity').forEach(input => {
+        input.addEventListener('input', calculateTotal);
+    });
+    
+    document.getElementById('delivery_cost').addEventListener('input', function() {
+        // Update delivery preview immediately
+        const deliveryCost = parseFloat(this.value.replace(',', '.')) || 0;
+        document.getElementById('delivery_preview').textContent = 
+            'R$ ' + deliveryCost.toFixed(2).replace('.', ',');
+        calculateTotal();
+    });
+});
+</script>
+{% endblock %}

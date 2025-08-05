@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <h2 class="text-3xl font-bold text-primary mb-6">
+        <i class="fas fa-money-bill-wave mr-2"></i>Despesas
+    </h2>
+
+    <div class="card mb-6">
+        <div class="card-header bg-secondary text-white cursor-pointer" id="newExpenseHeader">
+            <h4><i class="fas fa-plus-circle mr-2"></i>Adicionar Nova Despesa</h4>
+        </div>
+        <div class="card-body hidden" id="newExpenseForm">
+            <form method="POST" action="{{ url_for('add_expense') }}">
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">
+                        <i class="fas fa-money-bill text-primary mr-2"></i>Valor (R$)
+                    </label>
+                    <input type="number" step="0.01" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-secondary" 
+                           id="amount" name="amount" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">
+                        <i class="fas fa-align-left text-primary mr-2"></i>Descrição
+                    </label>
+                    <input type="text" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-secondary" 
+                           id="description" name="description" value="Compras" required>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button type="submit" class="bg-secondary text-white px-6 py-2 rounded-lg hover:bg-opacity-90">
+                        <i class="fas fa-save mr-2"></i>Salvar Despesa
+                    </button>
+                    <button type="button" id="cancelExpense" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-opacity-90">
+                        <i class="fas fa-times mr-2"></i>Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h4><i class="fas fa-list mr-2"></i>Lista de Despesas</h4>
+        </div>
+        <div class="card-body">
+            {% if expenses %}
+                <!-- Pagination Controls -->
+                {% set per_page = 10 %}
+                {% set page = request.args.get('page', 1)|int %}
+                {% set total_pages = (expenses|length / per_page)|round(0, 'ceil')|int %}
+                {% set paginated_expenses = expenses[(page-1)*per_page : page*per_page] %}
+                
+                <div class="flex justify-between items-center mb-4">
+                    <div class="text-sm text-gray-600">
+                        Página {{ page }} de {{ total_pages }} - Total: {{ expenses|length }} despesas
+                    </div>
+                    <div class="flex space-x-1">
+                        {% if page > 1 %}
+                        <a href="?page={{ page-1 }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                        {% endif %}
+                        
+                        {% for p in range(1, total_pages+1) %}
+                            {% if p == page %}
+                            <span class="px-3 py-1 bg-secondary text-white rounded">{{ p }}</span>
+                            {% else %}
+                            <a href="?page={{ p }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">{{ p }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page < total_pages %}
+                        <a href="?page={{ page+1 }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Mobile Cards View -->
+                <div class="md:hidden space-y-4">
+                    {% for expense in paginated_expenses %}
+                    <div class="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="font-medium">{{ datetime.strptime(expense[3], '%Y-%m-%d').strftime('%d/%m/%Y') if expense[3] else '' }}</div>
+                                <div class="text-gray-600">R$ {{ "%.2f"|format(expense[1])|replace('.', ',') }}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="flex space-x-1 mt-1">
+                                    <a href="{{ url_for('edit_expense', expense_id=expense[0]) }}" 
+                                       class="text-primary hover:text-secondary p-1"
+                                       title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{{ url_for('delete_expense', expense_id=expense[0]) }}" 
+                                       class="text-red-500 hover:text-red-700 p-1"
+                                       title="Excluir">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t">
+                            <h5 class="font-medium mb-1">Descrição:</h5>
+                            <p class="text-sm">{{ expense[2] }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Desktop Table View -->
+                <div class="hidden md:block">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b bg-gray-50">
+                                <th class="text-left py-3 px-2">Data</th>
+                                <th class="text-left py-3 px-2">Valor</th>
+                                <th class="text-left py-3 px-2">Descrição</th>
+                                <th class="text-left py-3 px-2">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in paginated_expenses %}
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="py-3 px-2">{{ datetime.strptime(expense[3], '%Y-%m-%d').strftime('%d/%m/%Y') if expense[3] else '' }}</td>
+                                <td class="py-3 px-2">R$ {{ "%.2f"|format(expense[1])|replace('.', ',') }}</td>
+                                <td class="py-3 px-2">{{ expense[2] }}</td>
+                                <td class="py-3 px-2">
+                                    <div class="flex space-x-2">
+                                        <a href="{{ url_for('edit_expense', expense_id=expense[0]) }}" 
+                                           class="text-primary hover:text-secondary p-1"
+                                           title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{{ url_for('delete_expense', expense_id=expense[0]) }}" 
+                                           class="text-red-500 hover:text-red-700 p-1"
+                                           title="Excluir">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Controls (bottom) -->
+                <div class="flex justify-between items-center mt-4">
+                    <div class="text-sm text-gray-600">
+                        Página {{ page }} de {{ total_pages }} - Total: {{ expenses|length }} despesas
+                    </div>
+                    <div class="flex space-x-1">
+                        {% if page > 1 %}
+                        <a href="?page={{ page-1 }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                        {% endif %}
+                        
+                        {% for p in range(1, total_pages+1) %}
+                            {% if p == page %}
+                            <span class="px-3 py-1 bg-secondary text-white rounded">{{ p }}</span>
+                            {% else %}
+                            <a href="?page={{ p }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">{{ p }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page < total_pages %}
+                        <a href="?page={{ page+1 }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-4 text-gray-500">
+                    Nenhuma despesa encontrada
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle new expense form
+    const header = document.getElementById('newExpenseHeader');
+    const form = document.getElementById('newExpenseForm');
+    const cancelBtn = document.getElementById('cancelExpense');
+    
+    header.addEventListener('click', function() {
+        form.classList.toggle('hidden');
+        const icon = this.querySelector('i');
+        icon.classList.toggle('fa-plus-circle');
+        icon.classList.toggle('fa-minus-circle');
+    });
+    
+    cancelBtn.addEventListener('click', function() {
+        form.classList.add('hidden');
+        const icon = header.querySelector('i');
+        icon.classList.remove('fa-minus-circle');
+        icon.classList.add('fa-plus-circle');
+    });
+});
+</script>
+{% endblock %}

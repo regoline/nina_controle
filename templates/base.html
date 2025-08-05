@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nina Caseira - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet">
+    <style>
+        .bg-primary {
+            background-color: #f0eae1;
+        }
+        .text-primary {
+            color: #787c48;
+        }
+        .bg-secondary {
+            background-color: #b56b4c;
+        }
+        .text-secondary {
+            color: #b56b4c;
+        }
+        .handwriting {
+            font-family: 'Pacifico', cursive;
+        }
+        .handwriting2 {
+            font-family: 'Montserrat', sans-serif;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+        }
+        .card-body {
+            padding: 1.5rem;
+        }
+        .mobile-quick-menu {
+            display: none;
+        }
+        @media (max-width: 767px) {
+            .mobile-quick-menu {
+                display: flex;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background-color: white;
+                border-top: 1px solid #e5e7eb;
+                z-index: 40;
+            }
+            .mobile-quick-menu a {
+                flex: 1;
+                text-align: center;
+                padding: 12px 0;
+                color: #787c48;
+            }
+            .mobile-quick-menu a:hover {
+                background-color: #f0eae1;
+            }
+            .mobile-quick-menu i {
+                display: block;
+                margin: 0 auto 4px;
+                font-size: 1.2rem;
+            }
+            body {
+                padding-bottom: 60px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-primary min-h-screen">
+    <nav class="bg-white shadow-md fixed w-full z-10">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="logo-container mr-2">
+                        <img src="https://www.ninacaseira.com/logo.png" alt="Nina Caseira Logo" class="h-10">
+                    </div>
+                    <span class="text-xl font-bold">
+                        <span class="text-secondary handwriting">Nina</span>
+                        <span class="text-primary handwriting2"> Caseira</span>
+                    </span>
+                </div>
+                <div class="hidden md:flex space-x-4">
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('recipes') }}" class="text-primary hover:text-secondary">Receitas</a>
+                        <a href="{{ url_for('expenses') }}" class="text-primary hover:text-secondary">Despesas</a>
+                        <a href="{{ url_for('sales') }}" class="text-primary hover:text-secondary">Vendas</a>
+                        <a href="{{ url_for('results') }}" class="text-primary hover:text-secondary">Resultados</a>
+                        {% if current_user.is_admin %}
+                        <a href="{{ url_for('admin') }}" class="text-primary hover:text-secondary">Admin</a>
+                        {% endif %}
+                        <a href="{{ url_for('logout') }}" class="text-primary hover:text-secondary">Sair</a>
+                    {% endif %}
+                </div>
+                <div class="md:hidden">
+                    <button id="menu-btn" class="text-primary focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white pb-4">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('recipes') }}" class="block px-4 py-2 text-primary hover:bg-gray-100">
+                    <i class="fas fa-utensils mr-2"></i>Receitas
+                </a>
+                <a href="{{ url_for('results') }}" class="block px-4 py-2 text-primary hover:bg-gray-100">
+                    <i class="fas fa-chart-line mr-2"></i>Resultados
+                </a>
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('admin') }}" class="block px-4 py-2 text-primary hover:bg-gray-100">
+                    <i class="fas fa-user-shield mr-2"></i>Admin
+                </a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-primary hover:bg-gray-100">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Sair
+                </a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Mobile Quick Menu (Vendas/Despesas) -->
+    {% if current_user.is_authenticated %}
+    <div class="mobile-quick-menu md:hidden">
+        <a href="{{ url_for('sales') }}">
+            <i class="fas fa-cash-register"></i>
+            <span>Vendas</span>
+        </a>
+        <a href="{{ url_for('expenses') }}">
+            <i class="fas fa-receipt"></i>
+            <span>Despesas</span>
+        </a>
+    </div>
+    {% endif %}
+
+    <main class="container mx-auto px-4 pt-24 pb-12">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} mb-6 p-4 rounded {% if category == 'success' %}bg-green-100 text-green-800{% elif category == 'danger' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                        {{ message }}
+                        <button type="button" class="float-right focus:outline-none" onclick="this.parentElement.remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('menu-btn').addEventListener('click', function() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>

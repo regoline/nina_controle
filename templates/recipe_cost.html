@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2 class="text-3xl font-bold text-primary mb-6">Recipe Cost Analysis</h2>
+    
+    <div class="card mb-6">
+        <div class="card-body">
+            <h4 class="text-xl font-bold text-primary mb-4">Ingredients Cost</h4>
+            <table class="w-full mb-4">
+                <thead>
+                    <tr class="border-b">
+                        <th class="text-left py-2">Ingredient</th>
+                        <th class="text-left py-2">Quantity</th>
+                        <th class="text-left py-2">Unit</th>
+                        <th class="text-left py-2">Cost</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ingredient in ingredients %}
+                    <tr class="border-b">
+                        <td class="py-2">{{ ingredient[0] }}</td>
+                        <td class="py-2">{{ "%.2f"|format(ingredient[1]) }}</td>
+                        <td class="py-2">{{ ingredient[2] }}</td>
+                        <td class="py-2">${{ "%.2f"|format(ingredient[4]) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="border-t-2">
+                    <tr>
+                        <td class="py-2 font-bold" colspan="3">Total Cost</td>
+                        <td class="py-2 font-bold">${{ "%.2f"|format(total_cost) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2 font-bold" colspan="3">Cost per Unit (Yield: {{ recipe_yield }})</td>
+                        <td class="py-2 font-bold">${{ "%.2f"|format(unit_cost) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+            
+            <div class="mt-4">
+                <a href="{{ url_for('edit_recipe', recipe_id=recipe_id) }}" class="bg-secondary text-white px-4 py-2 rounded hover:bg-opacity-90">Back to Recipe</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
