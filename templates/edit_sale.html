@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     {% endfor %}
 
-    // Template for new recipe items
+    // Template for new recipe items - fixed the template string
     const newRecipeTemplate = `
         <div class="recipe-item border p-4 rounded-lg">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -179,13 +179,14 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     `;
 
-    // Add new recipe row
+    // Add new recipe row - fixed the implementation
     document.getElementById('add-recipe').addEventListener('click', function() {
-        const container = document.createElement('div');
-        container.innerHTML = newRecipeTemplate;
-        const newItem = container.firstChild;
+        const container = document.getElementById('recipe-items');
+        const template = document.createElement('template');
+        template.innerHTML = newRecipeTemplate.trim();
+        const newItem = template.content.firstChild;
         
-        document.getElementById('recipe-items').appendChild(newItem);
+        container.appendChild(newItem);
         
         // Add event listeners to new elements
         newItem.querySelector('.recipe-select').addEventListener('change', calculateTotal);
@@ -203,6 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
         calculateTotal();
     });
 
+    // Rest of your existing JavaScript code...
     // Initialize remove buttons for existing items
     document.querySelectorAll('.remove-recipe').forEach(btn => {
         btn.addEventListener('click', function() {
