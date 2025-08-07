@@ -518,7 +518,8 @@ def edit_sale(sale_id):
                   'is_delivered' in request.form, 
                   'is_paid' in request.form,
                   date,  # Date parameter added here
-                  sale_id))
+                  delivery_date,  # Delivery date parameter
+                  sale_id))  # sale_id parameter added at the end
         
         conn.commit()
         conn.close()
