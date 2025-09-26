@@ -8,7 +8,6 @@ import secrets
 import ast
 
 app = Flask(__name__)
-app.secret_key = '31DUJ_4eYlQ'
 app.config['SESSION_COOKIE_DOMAIN'] = '.ninacaseira.com'
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = True  # if using HTTPS
